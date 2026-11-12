@@ -64,9 +64,6 @@ const ruleOptionsEnable = {
 
 // 定义前置规则
 const prefixRules = [
-  // 规则集下载域名，避免出现鸡蛋问题
-  'DOMAIN,cdn.jsdmirror.com,直连',
-
   // 私有网络直连
   'RULE-SET,private,直连',
 
@@ -146,10 +143,10 @@ const directProxies = [
 ];
 
 // 图标 URL 公共前缀
-const iconBaseUrl = 'https://cdn.jsdmirror.com/gh/AIsouler/MyClash@main/Icons/svg/';
+const iconBaseUrl = 'https://fastly.jsdelivr.net/gh/AIsouler/MyClash@main/Icons/svg/';
 
 // 规则集 URL 公共前缀
-const ruleSetBaseUrl = 'https://cdn.jsdmirror.com/gh/appshubcc/bett-rules@meta/geo/';
+const ruleSetBaseUrl = 'https://fastly.jsdelivr.net/gh/appshubcc/bett-rules@meta/geo/';
 
 // 定义地区策略组
 const regionDefinitions = [
@@ -325,10 +322,8 @@ const baseRuleProviders = {
 
 // 策略组公共配置
 const groupBaseOption = {
-  interval: 600,
-  timeout: 3000,
+  timeout: 5000,
   url: 'https://www.apple.com/library/test/success.html',
-  lazy: true,
   'max-failed-times': 3,
   'empty-fallback': 'REJECT',
 };
@@ -343,6 +338,8 @@ const selectBaseOption = {
 const urlTestBaseOption = {
   ...groupBaseOption,
   type: 'url-test',
+  interval: 600,
+  lazy: true,
   tolerance: 50,
   'exclude-type': 'DIRECT',
   icon: `${iconBaseUrl}Auto.svg`,
@@ -353,6 +350,8 @@ const urlTestBaseOption = {
 const loadBalanceBaseOption = {
   ...groupBaseOption,
   type: 'load-balance',
+  interval: 600,
+  lazy: true,
   strategy: 'sticky-sessions',
   'exclude-type': 'DIRECT',
   icon: `${iconBaseUrl}RoundRobin.svg`,
@@ -662,31 +661,17 @@ const serviceConfigs = [
     providers: {
       emby: {
         ...ruleProviderCommonDomain,
-        url: 'https://cdn.jsdmirror.com/gh/666OS/rules@release/mihomo/domain/Emby.mrs',
+        url: `${ruleSetBaseUrl}geosite/category-emby.mrs`,
         path: './ruleset/emby.mrs',
-        'path-in-bundle': 'geo/geosite/category-emby.mrs',
-      },
-      emos: {
-        ...ruleProviderCommonDomain,
-        url: 'https://cdn.jsdmirror.com/gh/binaryu/emos-proxy-rule@main/rules/emos-mihomo.mrs',
-        path: './ruleset/emos.mrs',
         'path-in-bundle': 'geo/geosite/category-emby.mrs',
       },
     },
     icon: `${iconBaseUrl}Emby.svg`,
     rules: [
       'RULE-SET,emby,Emby',
-      'RULE-SET,emos,Emby',
       'DOMAIN-SUFFIX,mb3admin.com,Emby',
       'DOMAIN-SUFFIX,nubebelle.com,Emby',
       'DOMAIN-KEYWORD,emby,Emby',
-      'PROCESS-NAME,com.mb.android,Emby',
-      'PROCESS-NAME,tv.emby.embyatv,Emby',
-      'PROCESS-NAME,com.hush.yamby,Emby',
-      'PROCESS-NAME,com.jellycine.app,Emby',
-      'PROCESS-NAME,com.mountains.hills,Emby',
-      'PROCESS-NAME,RodelPlayer.App.exe,Emby',
-      'PROCESS-NAME,com.feifeiduck.capyplayer,Emby',
     ],
   },
   {
@@ -982,16 +967,16 @@ function createRegionGroup(name, icon, proxies) {
     const urlTestName = `${name}-自动选择`;
     return [
       {
-        ...urlTestBaseOption,
-        name: urlTestName,
-        proxies,
-      },
-      {
         ...selectBaseOption,
         name,
         icon,
         proxies: [...proxies, urlTestName],
         hidden: hideManualSelectGroupEnabled,
+      },
+      {
+        ...urlTestBaseOption,
+        name: urlTestName,
+        proxies,
       },
     ];
   }
@@ -1879,10 +1864,6 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
  * 主入口：覆写机场订阅配置，生成完整 mihomo 配置
  */
 function main(config) {
-  if (config['proxy-providers'] && Object.keys(config['proxy-providers']).length > 0) {
-    throw new Error('配置文件中包含 proxy-providers，请使用机场提供的配置文件进行覆写');
-  }
-
   const newConfig = {};
 
   const filteredProxies = filterAndNormalizeProxies(config);
@@ -1961,11 +1942,9 @@ function main(config) {
     ...(ruleOptionsEnable.屏蔽代理QUIC流量 ? blockForeignQuic : []),
     ...functionalRules,
     'RULE-SET,geolocation-!cn,默认代理',
-    ...functionalIpRules,
-
-    // 兜底规则
     'RULE-SET,cn_ip,直连',
     'RULE-SET,private_ip,直连',
+    ...functionalIpRules,
     `MATCH,${ruleOptionsEnable.极简国内外分流模式 ? '默认代理' : '漏网之鱼'}`,
   ];
 
