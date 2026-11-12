@@ -252,19 +252,17 @@ group_common:
   group_common_select:
     &group_common_select {
       type: select,
-      interval: 600,
-      timeout: 3000,
+      timeout: 5000,
       max-failed-times: 3,
       empty-fallback: REJECT,
       url: 'https://www.apple.com/library/test/success.html',
-      lazy: true,
     }
 
   group_common_auto:
     &group_common_auto {
       type: url-test,
       interval: 600,
-      timeout: 3000,
+      timeout: 5000,
       max-failed-times: 3,
       empty-fallback: REJECT,
       url: 'https://www.apple.com/library/test/success.html',
@@ -508,12 +506,12 @@ rules:
   - RULE-SET,steam,Steam
   - RULE-SET,geolocation-!cn,默认代理
 
-  # 代理（IP类）
+  # IP规则（直连）
+  - RULE-SET,cn_ip,直连
+  - RULE-SET,private_ip,直连
+
+  # IP规则（代理）
   - RULE-SET,google_ip,Google
   - RULE-SET,telegram_ip,Telegram
   - RULE-SET,steam_ip,Steam
-
-  # 兜底规则
-  - RULE-SET,cn_ip,直连
-  - RULE-SET,private_ip,直连
   - MATCH,漏网之鱼
